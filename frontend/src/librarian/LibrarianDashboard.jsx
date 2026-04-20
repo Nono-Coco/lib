@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import LibrarianBookManager from './LibrarianBookManager'
 import LibrarianBorrow from './LibrarianBorrow'
 import LibrarianReturnBooks from './LibrarianReturnBooks'
+import LibrarianSearchBorrowHistory from './LibrarianSearchBorrowHistory' 
 import { API_URL, getAuthHeaders } from './api'
 
 export default function LibrarianDashboard({ librarian, onLogout }) {
@@ -114,6 +115,13 @@ export default function LibrarianDashboard({ librarian, onLogout }) {
       )
     }
     
+    // 查看借阅历史页面
+    if (activeTab === 'borrowHistory') {
+      return (
+        <LibrarianSearchBorrowHistory onBack={() => setActiveTab('home')} />
+      )
+    }
+    
     // 首页仪表盘
     return (
       <>
@@ -186,7 +194,7 @@ export default function LibrarianDashboard({ librarian, onLogout }) {
 
         {/* 功能卡片 */}
         <h3 className="text-xl font-bold text-gray-800 mb-4">⚡ 快速操作</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* 图书管理卡片 */}
           <div 
             className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition cursor-pointer border-2 border-transparent hover:border-blue-300"
@@ -223,6 +231,19 @@ export default function LibrarianDashboard({ librarian, onLogout }) {
             <p className="text-gray-500 text-sm mb-4">查看在借记录、接收归还、处理逾期罚款</p>
             <div className="flex items-center text-orange-500 font-semibold">
               进入还书管理 <span className="ml-2">→</span>
+            </div>
+          </div>
+
+          {/* 查看用户借阅历史卡片 */}
+          <div 
+            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition cursor-pointer border-2 border-transparent hover:border-purple-300"
+            onClick={() => setActiveTab('borrowHistory')}
+          >
+            <div className="text-5xl mb-4">📜</div>
+            <h2 className="text-xl font-bold mb-2 text-gray-800">借阅历史</h2>
+            <p className="text-gray-500 text-sm mb-4">按用户名或学号查询、查看用户完整借阅记录、图书状态跟踪</p>
+            <div className="flex items-center text-purple-500 font-semibold">
+              进入历史查询 <span className="ml-2">→</span>
             </div>
           </div>
         </div>
@@ -304,6 +325,17 @@ export default function LibrarianDashboard({ librarian, onLogout }) {
                   }`}
                 >
                   还书
+                </button>
+                {/* 添加借阅历史按钮 */}
+                <button
+                  onClick={() => setActiveTab('borrowHistory')}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                    activeTab === 'borrowHistory' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  借阅历史
                 </button>
               </div>
 

@@ -12,6 +12,8 @@ const initialForm = {
   libraryArea: '',
   shelfNo: 'A',
   shelfLevel: 1,
+  totalCopies: 1,
+  availableCopies: 1,
 };
 
 function normalizeBookToForm(book) {
@@ -26,6 +28,8 @@ function normalizeBookToForm(book) {
     libraryArea: book.libraryArea || '',
     shelfNo: book.shelfNo || 'A',
     shelfLevel: book.shelfLevel || 1,
+    totalCopies: book.totalCopies || 1,
+    availableCopies: book.availableCopies || 0,
   };
 }
 
@@ -72,7 +76,20 @@ export default function LibrarianBookManager({ librarian, onBack, onLogout }) {
 
   const handleChange = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+    setForm((current) => {
+      const nextForm = { ...current, [name]: value }
+      
+      // 当总册数变化时，确保可借册数不超过总册数
+      if (name === 'totalCopies') {
+        const total = Number(value) || 1
+        const available = Number(current.availableCopies) || 0
+        if (available > total) {
+          nextForm.availableCopies = total
+        }
+      }
+      
+      return nextForm
+    })
   }
 
   const handleUnauthorized = () => {
@@ -87,6 +104,21 @@ export default function LibrarianBookManager({ librarian, onBack, onLogout }) {
 
     if (!form.title.trim() || !form.author.trim() || !form.isbn.trim() || !form.genre.trim()) {
       setError('请填写完整的图书基础信息')
+      return
+    }
+
+    if (Number(form.totalCopies) < 1) {
+      setError('总册数不能小于 1')
+      return
+    }
+
+    if (Number(form.availableCopies) < 0) {
+      setError('可借册数不能为负数')
+      return
+    }
+
+    if (Number(form.availableCopies) > Number(form.totalCopies)) {
+      setError('可借册数不能大于总册数')
       return
     }
 
@@ -343,6 +375,40 @@ export default function LibrarianBookManager({ librarian, onBack, onLogout }) {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-2">
+      总册数 {!isEditing && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      name="totalCopies"
+      type="number"
+      min="1"
+      value={form.totalCopies}
+      onChange={handleChange}
+      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-2">
+      可借册数
+    </label>
+    <input
+      name="availableCopies"
+      type="number"
+      min="0"
+      max={form.totalCopies}
+      value={form.availableCopies}
+      onChange={handleChange}
+      disabled={isEditing}
+      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+    />
+    {isEditing && (
+      <p className="text-xs text-gray-500 mt-1">由系统自动计算</p>
+    )}
+  </div>
+</div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">描述</label>
