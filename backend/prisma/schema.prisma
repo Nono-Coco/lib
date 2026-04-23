@@ -26,14 +26,24 @@ enum CopyStatus {
   DAMAGED
 }
 
+enum CopyStatus {
+  AVAILABLE
+  BORROWED
+  LOST
+  DAMAGED
+}
+
 model User {
   id                     Int                     @id @default(autoincrement())
   name                   String
   email                  String                  @unique
   passwordHash           String
   studentId              String?                 @unique
+  employeeId             String?                 @unique  // 新增：馆员工号
   role                   Role                    @default(STUDENT)
   createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  
   loans                  Loan[]
   ratings                Rating[]
   holds                  Hold[]
@@ -43,14 +53,19 @@ model User {
 }
 
 model Book {
-  id              Int        @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   title           String
   author          String
-  isbn            String     @unique
+  isbn            String   @unique
   genre           String
   description     String?
   language        String     @default("English")
   createdAt       DateTime   @default(now())
+  copies          Copy[]
+  language        String   @default("English")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
   copies          Copy[]
   ratings         Rating[]
   holds           Hold[]
@@ -93,7 +108,8 @@ model Rating {
   userId    Int
   stars     Int      @default(1)
   createdAt DateTime @default(now())
-  book      Book     @relation(fields: [bookId], references: [id])
+  
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([bookId, userId])
@@ -105,7 +121,8 @@ model Hold {
   userId    Int
   status    HoldStatus @default(WAITING)
   createdAt DateTime   @default(now())
-  book      Book       @relation(fields: [bookId], references: [id])
+  
+  book      Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
   user      User       @relation(fields: [userId], references: [id])
 }
 
@@ -114,16 +131,19 @@ model Wishlist {
   bookId    Int
   userId    Int
   createdAt DateTime @default(now())
-  book      Book     @relation(fields: [bookId], references: [id])
+  
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([bookId, userId])
 }
 
 model Config {
-  id    Int    @id @default(autoincrement())
-  key   String @unique
-  value String
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {
@@ -134,18 +154,8 @@ model AuditLog {
   entityId  Int?
   detail    String?
   createdAt DateTime @default(now())
+  
   user      User?    @relation(fields: [userId], references: [id])
-}
-
-model Librarian {
-  id         Int      @id @default(autoincrement())
-  employeeId String   @unique @map("employee_id")
-  name       String
-  password   String
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  @@map("librarians")
 }
 
 model Announcement {
@@ -157,6 +167,7 @@ model Announcement {
   expiryDate  DateTime?
   createdAt   DateTime                @default(now())
   updatedAt   DateTime                @updatedAt
+  
   publishers  AnnouncementPublisher[]
 }
 
@@ -164,6 +175,7 @@ model AnnouncementPublisher {
   id             Int          @id @default(autoincrement())
   userId         Int
   announcementId Int
+  
   user           User         @relation(fields: [userId], references: [id])
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
 

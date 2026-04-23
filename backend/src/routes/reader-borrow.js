@@ -1,12 +1,12 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { requireAuth } = require('../middleware/auth');
+const { requireLibrarianAuth } = require('../middleware/librarianAuth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 const MAX_BORROW_LIMIT = 5;
-const MAX_RENEW_COUNT = 2;
 const RENEW_DAYS = 14;
 
 // 获取我的借阅列表
@@ -99,8 +99,7 @@ router.post('/borrow/:copyId', requireAuth, async (req, res) => {
         dueDate: dueDate,
         fineAmount: 0,
         finePaid: false,
-        fineForgiven: false,
-        renewCount: 0
+        fineForgiven: false
       },
       include: {
         copy: {
@@ -150,27 +149,18 @@ router.post('/renew', requireAuth, async (req, res) => {
       return res.status(404).json({ message: '借阅记录不存在' });
     }
 
-    const currentRenewCount = loan.renewCount || 0;
-    if (currentRenewCount >= MAX_RENEW_COUNT) {
-      return res.status(400).json({ message: `续借次数已达上限（最多${MAX_RENEW_COUNT}次）` });
-    }
-
     const newDueDate = new Date(loan.dueDate);
     newDueDate.setDate(newDueDate.getDate() + RENEW_DAYS);
 
     await prisma.loan.update({
       where: { id: loan.id },
-      data: { 
-        dueDate: newDueDate,
-        renewCount: currentRenewCount + 1
-      }
+      data: { dueDate: newDueDate }
     });
 
     res.json({ 
       success: true, 
       message: '续借成功',
-      newDueDate: newDueDate,
-      renewCount: currentRenewCount + 1
+      newDueDate: newDueDate
     });
   } catch (error) {
     console.error('续借错误:', error);
